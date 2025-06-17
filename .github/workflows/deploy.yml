@@ -1,0 +1,40 @@
+name: Build and Deploy to Kubernetes
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE: harbor.gomesprogramador.com.br/fiap/soat-tech-challenge:${{ github.sha }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v3
+
+    - name: Login no Harbor
+      run: echo "${{ secrets.HARBOR_PASSWORD }}" | docker login harbor.gomesprogramador.com.br -u "${{ secrets.HARBOR_USERNAME }}" --password-stdin
+
+    - name: Build da imagem
+      run: docker build -t $IMAGE .
+
+    - name: Push da imagem
+      run: docker push $IMAGE
+
+    - name: Deploy no Kubernetes
+      uses: steebchen/kubectl@v2.0.0
+      with:
+        config: ${{ secrets.KUBE_CONFIG_DATA }}
+        command: set image --record deployment/soat-tech-challenge container-0=$IMAGE -n fiap
+
+    - name: Verificar rollout
+      uses: steebchen/kubectl@v2.0.0
+      with:
+        config: ${{ secrets.KUBE_CONFIG_DATA }}
+        version: v1.32.5
+        binaries-url: "https://dl.k8s.io/release/v1.32.5/bin/linux/amd64/kubectl"
+        command: rollout status deployment/soat-tech-challenge -n fiap
