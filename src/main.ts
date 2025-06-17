@@ -15,7 +15,7 @@ async function bootstrap() {
 
   const options = new DocumentBuilder()
     .setTitle('SOAT Tech Challenge')
-    .setDescription("Teste CI/CD")
+    .setDescription("Api Lanchonete")
     .setVersion('1.0')
     .build();
 
